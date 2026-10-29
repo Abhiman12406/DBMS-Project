@@ -63,7 +63,7 @@
 
 ## Phase 2: Advanced SQL Mechanics & RBAC
 
-- [ ] **Task 5: Implement Operational Views and Materialized Views**
+- [x] **Task 5: Implement Operational Views and Materialized Views**
   - **Description**: Write `database/postgres/02_views.sql` defining `v_live_trip_monitor` (real-time trip status, route info, calculated current delays), `v_station_hub_congestion` (materialized view aggregating incoming delays and passenger flows), and `v_passenger_rebooking_lineage`.
   - **Acceptance criteria**:
     - `v_live_trip_monitor` aggregates timetable stops and presents real-time line health.
@@ -75,7 +75,7 @@
     - `database/postgres/02_views.sql`
   - **Estimated scope**: S (1 file)
 
-- [ ] **Task 6: Implement PostgreSQL Recursive CTE Disruption Dependency Engine**
+- [x] **Task 6: Implement PostgreSQL Recursive CTE Disruption Dependency Engine**
   - **Description**: Write `database/postgres/03_recursive_cte.sql` implementing `fn_calculate_downstream_cascade(p_trip_id, p_station_id, p_delay_min)` using `WITH RECURSIVE` with cycle detection to compute downstream delayed trips and stranded transfer passengers.
   - **Acceptance criteria**:
     - Anchor member starts at disrupted trip and station.
@@ -88,7 +88,7 @@
     - `database/postgres/03_recursive_cte.sql`
   - **Estimated scope**: S (1 file)
 
-- [ ] **Task 7: Implement Database RBAC Roles & Row-Level Security (RLS)**
+- [x] **Task 7: Implement Database RBAC Roles & Row-Level Security (RLS)**
   - **Description**: Write `database/postgres/04_roles_rls.sql` configuring `transit_admin`, `dispatcher_role`, and `passenger_role`. Configure table grants and enable Row-Level Security on `reservations` using session setting `app.current_passenger_id`.
   - **Acceptance criteria**:
     - `dispatcher_role` can update trips, timetables, and reassignments, but cannot alter database roles.
@@ -103,9 +103,9 @@
 ---
 
 ### Checkpoint 2: Database Engine Logic
-- [ ] Views output consistent real-time operational metrics.
-- [ ] Recursive CTE executes in <25ms, traversing multiple downstream transfer hops.
-- [ ] RBAC roles and RLS restrict unauthorized queries at the database engine level.
+- [x] Views output consistent real-time operational metrics.
+- [x] Recursive CTE executes in <25ms, traversing multiple downstream transfer hops.
+- [x] RBAC roles and RLS restrict unauthorized queries at the database engine level.
 
 ---
 
