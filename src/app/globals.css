@@ -1,12 +1,13 @@
-@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Lexend+Mega:wght@500;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Public+Sans:wght@400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: #060913;
-  --foreground: #f1f5f9;
+  --background: #F4F0EA;
+  --foreground: #000000;
+  --card-bg: #FFFFFF;
 }
 
 html,
@@ -17,62 +18,156 @@ body {
 
 body {
   color: var(--foreground);
-  background: var(--background);
-  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  background-color: var(--background);
+  font-family: 'Public Sans', 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
   letter-spacing: -0.01em;
 }
 
 ::selection {
-  background: rgba(56, 189, 248, 0.35);
-  color: #ffffff;
+  background: #FFE600;
+  color: #000000;
 }
 
+/* Neu-Brutalist High-Contrast Scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #334155 transparent;
+  scrollbar-color: #000000 #F4F0EA;
 }
 
-/* Bento Card anatomy */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #F4F0EA;
+  border-left: 2px solid #000000;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #000000;
+  border: 1px solid #000000;
+}
+
+/* Neu-Brutalist Card Standard */
+.brutal-card,
 .bento-card {
   position: relative;
-  overflow: hidden;
-  border-radius: 1.25rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(11, 17, 32, 0.65);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 2.5px solid #000000;
+  background-color: #FFFFFF;
+  border-radius: 1rem;
+  box-shadow: 5px 5px 0px 0px #000000;
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.bento-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.15) 50%, transparent 100%);
-  pointer-events: none;
+.brutal-card-interactive,
+.bento-card-interactive {
+  cursor: pointer;
 }
 
-.bento-card:hover {
-  border-color: rgba(255, 255, 255, 0.16);
-}
-
+.brutal-card-interactive:hover,
 .bento-card-interactive:hover {
-  border-color: rgba(56, 189, 248, 0.35);
-  box-shadow: 0 16px 36px -12px rgba(56, 189, 248, 0.12);
-  transform: translateY(-1px);
+  transform: translate(-2px, -2px);
+  box-shadow: 7px 7px 0px 0px #000000;
 }
 
-/* Bento dot grid pattern */
+/* Neu-Brutalist Button Utility */
+.brutal-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 2px solid #000000;
+  border-radius: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 3px 3px 0px 0px #000000;
+  transition: all 0.12s ease-in-out;
+  cursor: pointer;
+}
+
+.brutal-btn:hover:not(:disabled) {
+  transform: translate(-1.5px, -1.5px);
+  box-shadow: 5px 5px 0px 0px #000000;
+}
+
+.brutal-btn:active:not(:disabled) {
+  transform: translate(1.5px, 1.5px);
+  box-shadow: 1px 1px 0px 0px #000000;
+}
+
+.brutal-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 2px 2px 0px 0px #000000;
+}
+
+/* Neu-Brutalist Pill Badge */
+.brutal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 2px solid #000000;
+  border-radius: 0.5rem;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 2px 2px 0px 0px #000000;
+}
+
+/* Neu-Brutalist Technical Dot Matrix Grid */
+.bg-brutal-grid,
 .bg-bento-grid {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
-  background-size: 24px 24px;
+  background-image: radial-gradient(#000000 1.25px, transparent 1.25px);
+  background-size: 20px 20px;
 }
 
-/* Custom styled inputs & sliders */
+/* Neu-Brutalist Diagonal Stripe Pattern */
+.bg-brutal-stripes {
+  background: repeating-linear-gradient(
+    45deg,
+    #000000,
+    #000000 10px,
+    #FFE600 10px,
+    #FFE600 20px
+  );
+}
+
+.bg-brutal-stripes-subtle {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(0, 0, 0, 0.04),
+    rgba(0, 0, 0, 0.04) 10px,
+    transparent 10px,
+    transparent 20px
+  );
+}
+
+/* Inputs & Form Elements */
 input[type='range'] {
-  accent-color: #38bdf8;
+  accent-color: #000000;
+  height: 8px;
+  border: 2px solid #000000;
+  border-radius: 9999px;
+  background-color: #FFFFFF;
+}
+
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #FFE600;
+  border: 2.5px solid #000000;
+  box-shadow: 2px 2px 0px 0px #000000;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+input[type='range']::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
 }

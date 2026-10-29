@@ -23,10 +23,10 @@ export function formatDelay(minutes: number | string | null | undefined): string
 export function delayClasses(minutes: number | string | null | undefined): string {
   const value = Number(minutes ?? 0);
   if (value >= 15) {
-    return 'bg-rose-500/15 text-rose-300 ring-rose-500/30';
+    return 'bg-[#FF5757] text-white border-2 border-black font-black shadow-[2px_2px_0px_0px_#000]';
   }
   if (value > 0) {
-    return 'bg-amber-500/15 text-amber-300 ring-amber-500/30';
+    return 'bg-[#FFE600] text-black border-2 border-black font-black shadow-[2px_2px_0px_0px_#000]';
   }
-  return 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30';
+  return 'bg-[#4EFA8B] text-black border-2 border-black font-black shadow-[2px_2px_0px_0px_#000]';
 }

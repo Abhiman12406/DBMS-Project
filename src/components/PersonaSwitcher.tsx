@@ -15,10 +15,11 @@ const OPTIONS: Array<{
   badge: string;
   role: string;
   icon: typeof User;
+  activeBg: string;
 }> = [
-  { key: 'dispatcher', label: 'Dispatcher', badge: 'Ops', role: 'dispatcher_role', icon: RadioTower },
-  { key: 'passenger', label: 'Passenger', badge: 'RLS', role: 'passenger_role', icon: User },
-  { key: 'auditor', label: 'Auditor', badge: 'Admin', role: 'transit_admin', icon: ShieldCheck },
+  { key: 'dispatcher', label: 'Dispatcher', badge: 'Ops', role: 'dispatcher_role', icon: RadioTower, activeBg: 'bg-[#FFE600]' },
+  { key: 'passenger', label: 'Passenger', badge: 'RLS', role: 'passenger_role', icon: User, activeBg: 'bg-[#00F0FF]' },
+  { key: 'auditor', label: 'Auditor', badge: 'Admin', role: 'transit_admin', icon: ShieldCheck, activeBg: 'bg-[#C084FC]' },
 ];
 
 export function PersonaSwitcher({ value, onChange }: PersonaSwitcherProps) {
@@ -26,7 +27,7 @@ export function PersonaSwitcher({ value, onChange }: PersonaSwitcherProps) {
     <div
       role="radiogroup"
       aria-label="Database persona role"
-      className="inline-flex items-center rounded-xl border border-white/10 bg-slate-900/60 p-1 shadow-inner backdrop-blur-md"
+      className="inline-flex items-center rounded-xl border-2 border-black bg-white p-1 shadow-[3px_3px_0px_0px_#000000] gap-1"
     >
       {OPTIONS.map((option) => {
         const active = option.key === value;
@@ -40,19 +41,19 @@ export function PersonaSwitcher({ value, onChange }: PersonaSwitcherProps) {
             aria-checked={active}
             onClick={() => onChange(option.key)}
             title={`Switch to ${option.label} (SET LOCAL ROLE ${option.role})`}
-            className={`group relative flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium cursor-pointer transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
+            className={`group relative flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs cursor-pointer transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black ${
               active
-                ? 'bg-gradient-to-r from-sky-500 to-sky-600 text-slate-950 font-semibold shadow-md shadow-sky-500/20'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                ? `${option.activeBg} text-black font-black border-2 border-black shadow-[2px_2px_0px_0px_#000000] -translate-y-0.5`
+                : 'text-slate-800 font-bold border-2 border-transparent hover:bg-slate-100 hover:text-black'
             }`}
           >
-            <Icon className={`h-3.5 w-3.5 transition-transform duration-200 ${active ? 'scale-110' : 'group-hover:scale-105'}`} />
-            <span>{option.label}</span>
+            <Icon className={`h-3.5 w-3.5 ${active ? 'stroke-[2.5]' : 'stroke-2'}`} />
+            <span className="tracking-tight">{option.label}</span>
             <span
-              className={`rounded px-1 py-0.2 text-[9px] font-mono tracking-tight ${
+              className={`rounded px-1.5 py-0.2 text-[9px] font-mono tracking-tight font-black border ${
                 active
-                  ? 'bg-slate-950/20 text-slate-950 font-bold'
-                  : 'bg-white/5 text-slate-500 group-hover:text-slate-400'
+                  ? 'bg-black text-white border-black'
+                  : 'bg-slate-100 text-slate-700 border-slate-300'
               }`}
             >
               {option.badge}

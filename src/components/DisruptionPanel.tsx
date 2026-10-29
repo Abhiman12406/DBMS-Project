@@ -27,8 +27,7 @@ interface DisruptionPreset {
   shortLabel: string;
   description: string;
   severity: string;
-  accent: string;
-  badgeClass: string;
+  severityBg: string;
   payload: Record<string, unknown>;
 }
 
@@ -39,8 +38,7 @@ const PRESETS: DisruptionPreset[] = [
     shortLabel: 'Catenary Trip',
     description: 'SCADA reports total feeder trip on Red Line at Central Station.',
     severity: 'CRITICAL',
-    accent: 'text-rose-300',
-    badgeClass: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
+    severityBg: 'bg-[#FF5757] text-white',
     payload: {
       incident_type: 'CATENARY_POWER_FAILURE',
       severity: 'CRITICAL',
@@ -67,8 +65,7 @@ const PRESETS: DisruptionPreset[] = [
     shortLabel: 'Signal Fault',
     description: 'Interlocking monitor loses signal aspect on Blue Line.',
     severity: 'SEVERE',
-    accent: 'text-amber-300',
-    badgeClass: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+    severityBg: 'bg-[#FF8800] text-black',
     payload: {
       incident_type: 'SIGNAL_SYSTEM_FAULT',
       severity: 'SEVERE',
@@ -94,8 +91,7 @@ const PRESETS: DisruptionPreset[] = [
     shortLabel: 'Possession Overrun',
     description: 'Engineering works overrun on Green Line Tech Park corridor.',
     severity: 'MODERATE',
-    accent: 'text-emerald-300',
-    badgeClass: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+    severityBg: 'bg-[#4EFA8B] text-black',
     payload: {
       incident_type: 'TRACK_OBSTRUCTION',
       severity: 'MODERATE',
@@ -183,34 +179,34 @@ export function DisruptionPanel({
   }
 
   return (
-    <section className="bento-card p-5 h-full flex flex-col justify-between">
+    <section className="brutal-card p-5 h-full flex flex-col justify-between bg-white border-[2.5px] border-black shadow-[5px_5px_0px_0px_#000000]">
       <div>
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-rose-400">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] bg-[#FF5757] text-white px-2 py-0.5 border border-black rounded shadow-[1px_1px_0px_0px_#000]">
                 Disruption Injector
               </span>
-              <span className="rounded bg-white/5 px-1.5 py-0.5 font-mono text-[9px] text-slate-400 border border-white/5">
+              <span className="rounded bg-[#FAF8F5] px-2 py-0.5 font-mono text-[9px] font-black text-black border-2 border-black shadow-[1px_1px_0px_0px_#000]">
                 SCADA Sensor
               </span>
             </div>
-            <h2 className="mt-1 flex items-center gap-2 text-base font-bold text-white sm:text-lg">
-              <Zap className="h-4 w-4 text-rose-400 shrink-0" />
+            <h2 className="mt-1 flex items-center gap-2 text-base font-black text-black sm:text-xl">
+              <Zap className="h-5 w-5 text-black stroke-[2.5] shrink-0" />
               <span>Incident Studio</span>
             </h2>
           </div>
 
-          <span className="font-mono text-[10px] text-slate-500 bg-white/[0.03] px-2 py-0.5 rounded border border-white/5">
+          <span className="font-mono text-[10px] font-black text-black bg-[#FFE600] px-2 py-0.5 rounded border border-black shadow-[1px_1px_0px_0px_#000]">
             POST /api/disruptions
           </span>
         </div>
 
         {/* Read-Only Warning if Passenger */}
         {!canOperate ? (
-          <div className="mt-3.5 flex items-start gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
-            <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+          <div className="mt-3.5 flex items-start gap-2.5 rounded-xl border-2 border-black bg-[#FFE600] p-3 text-xs font-bold text-black shadow-[3px_3px_0px_0px_#000]">
+            <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-black stroke-[2.5]" />
             <span>
               Passenger persona is read-only. Switch to <strong>Dispatcher</strong> or <strong>Auditor</strong> to inject live incidents.
             </span>
@@ -219,7 +215,7 @@ export function DisruptionPanel({
 
         {/* Incident Presets Chips */}
         <div className="mt-4">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 mb-2">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-600 mb-2">
             Select Incident Scenario
           </p>
           <div className="space-y-2">
@@ -231,22 +227,22 @@ export function DisruptionPanel({
                   type="button"
                   disabled={!canOperate || submitting}
                   onClick={() => selectPreset(preset)}
-                  className={`w-full rounded-xl border p-2.5 text-left cursor-pointer transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 ${
+                  className={`w-full rounded-xl border-2 border-black p-2.5 text-left cursor-pointer transition-all duration-120 disabled:cursor-not-allowed disabled:opacity-60 ${
                     active
-                      ? 'border-sky-500/60 bg-sky-500/10 shadow-sm shadow-sky-500/10 ring-1 ring-sky-500/30'
-                      : 'border-white/5 bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.04]'
+                      ? 'bg-[#FFE600] shadow-[4px_4px_0px_0px_#000] -translate-y-0.5'
+                      : 'bg-[#FAF8F5] shadow-[2px_2px_0px_0px_#000] hover:bg-slate-100 hover:-translate-y-0.5'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className={`flex items-center gap-2 text-xs font-semibold ${preset.accent}`}>
-                      <Zap className="h-3.5 w-3.5 shrink-0" />
+                    <span className="flex items-center gap-2 text-xs font-black text-black">
+                      <Zap className="h-3.5 w-3.5 shrink-0 stroke-[2.5]" />
                       <span>{preset.label}</span>
                     </span>
-                    <span className={`rounded-full px-1.5 py-0.2 text-[9px] font-bold border ${preset.badgeClass}`}>
+                    <span className={`rounded px-1.5 py-0.2 text-[9px] font-black uppercase border border-black shadow-[1px_1px_0px_0px_#000] ${preset.severityBg}`}>
                       {preset.severity}
                     </span>
                   </div>
-                  <p className="mt-1 text-[11px] text-slate-400 leading-snug line-clamp-1">
+                  <p className="mt-1 text-[11px] font-medium text-slate-800 leading-snug line-clamp-1">
                     {preset.description}
                   </p>
                 </button>
@@ -260,12 +256,12 @@ export function DisruptionPanel({
           <div className="flex items-center justify-between gap-2 mb-1.5">
             <label
               htmlFor="incident-payload"
-              className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 flex items-center gap-1.5"
+              className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-600 flex items-center gap-1.5"
             >
-              <Code2 className="h-3 w-3" />
+              <Code2 className="h-3 w-3 stroke-[2.5]" />
               <span>Polymorphic Mongo Document</span>
             </label>
-            <span className="font-mono text-[9px] text-slate-500">
+            <span className="font-mono text-[9px] font-black text-black bg-slate-200 px-1.5 py-0.5 rounded border border-black">
               {activePreset ? activePreset.shortLabel : 'Custom Payload'}
             </span>
           </div>
@@ -281,42 +277,42 @@ export function DisruptionPanel({
             disabled={!canOperate || submitting}
             spellCheck={false}
             rows={7}
-            className="w-full resize-y rounded-xl border border-white/10 bg-[#040711] p-3 font-mono text-[10.5px] leading-relaxed text-slate-200 outline-none transition focus:border-sky-500 focus:ring-1 focus:ring-sky-500/50 disabled:cursor-not-allowed disabled:opacity-60 shadow-inner"
+            className="w-full resize-y rounded-xl border-2 border-black bg-[#FAF8F5] p-3 font-mono text-[11px] font-bold leading-relaxed text-black outline-none transition focus:bg-white focus:shadow-[4px_4px_0px_0px_#000] disabled:cursor-not-allowed disabled:opacity-60 shadow-[3px_3px_0px_0px_#000]"
           />
         </div>
 
         {/* Error Feedback */}
         {error ? (
-          <div className="mt-3 flex items-start gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-200">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-400" />
+          <div className="mt-3 flex items-start gap-2 rounded-xl border-2 border-black bg-[#FF5757] p-3 text-xs font-black text-white shadow-[3px_3px_0px_0px_#000]">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 stroke-[2.5]" />
             <span className="break-words">{error}</span>
           </div>
         ) : null}
       </div>
 
       {/* Action CTA Button */}
-      <div className="mt-4 pt-3 border-t border-white/5 space-y-2">
+      <div className="mt-4 pt-3 border-t-2 border-black space-y-2">
         <button
           type="button"
           onClick={handleSubmit}
           disabled={!canOperate || submitting}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-500 to-rose-600 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-rose-500/20 cursor-pointer transition-all duration-200 hover:from-rose-400 hover:to-rose-500 hover:shadow-rose-500/30 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 disabled:shadow-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
+          className="brutal-btn w-full bg-[#FF5757] text-white py-3 px-4 shadow-[4px_4px_0px_0px_#000] hover:shadow-[6px_6px_0px_0px_#000] active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0px_0px_#000] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black"
         >
           {submitting ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Propagating Cascade via Recursive CTE…</span>
+              <Loader2 className="h-4 w-4 animate-spin stroke-[2.5]" />
+              <span className="font-black">Propagating Cascade via Recursive CTE…</span>
             </>
           ) : (
             <>
-              <Play className="h-4 w-4 fill-current" />
-              <span>Inject Disruption & Run Cascade</span>
+              <Play className="h-4 w-4 fill-current stroke-[2]" />
+              <span className="font-black tracking-wide">Inject Disruption & Run Cascade</span>
             </>
           )}
         </button>
 
-        <p className="text-center font-mono text-[9px] text-slate-500 flex items-center justify-center gap-1.5">
-          <Database className="h-3 w-3 text-slate-500" />
+        <p className="text-center font-mono text-[10px] font-black text-slate-700 flex items-center justify-center gap-1.5">
+          <Database className="h-3 w-3 text-black stroke-[2.5]" />
           <span>MongoDB Polymorphic Write ➔ PostgreSQL CTE</span>
         </p>
       </div>

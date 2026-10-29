@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { AlertTriangle, MapPin, Radio, TrainFront } from 'lucide-react';
 
 import type { NetworkSnapshot } from '@/lib/client';
+import { gsap, useGSAP } from '@/lib/gsap';
 import type {
   CascadeResult,
   StationScheduleRow,
@@ -136,14 +137,31 @@ function TrainGlyph({
   count: number;
 }) {
   return (
-    <g transform={`translate(${x} ${y})`} pointerEvents="none">
-      <rect x={-14} y={-8} width={28} height={16} rx={5} fill={color} opacity={0.95} className="shadow-md" />
-      <rect x={-9} y={-4} width={18} height={5} rx={1.5} fill="#050912" opacity={0.8} />
-      <circle cx={-8} cy={9} r={2.5} fill="#e2e8f0" />
-      <circle cx={8} cy={9} r={2.5} fill="#e2e8f0" />
-      <text x={0} y={-13} textAnchor="middle" fontSize={9} fontWeight={600} fill={color} className="font-mono">
-        {count} trips
-      </text>
+    <g className="gsap-train-glyph" transform={`translate(${x} ${y})`} pointerEvents="none">
+      {/* Hard offset shadow */}
+      <rect x={-13} y={-7} width={30} height={18} rx={4} fill="#000000" />
+      {/* Train Body */}
+      <rect x={-15} y={-9} width={30} height={18} rx={4} fill={color} stroke="#000000" strokeWidth={2.5} />
+      {/* Windshield */}
+      <rect x={-10} y={-5} width={20} height={6} rx={2} fill="#FFFFFF" stroke="#000000" strokeWidth={1.5} />
+      {/* Wheels */}
+      <circle cx={-8} cy={10} r={2.5} fill="#000000" />
+      <circle cx={8} cy={10} r={2.5} fill="#000000" />
+      {/* Count Badge Stamp */}
+      <g transform="translate(0, -15)">
+        <rect x={-24} y={-8} width={48} height={14} rx={3} fill="#000000" />
+        <text
+          x={0}
+          y={2}
+          textAnchor="middle"
+          fontSize={8.5}
+          fontWeight={900}
+          fill="#FFE600"
+          fontFamily="monospace"
+        >
+          {count} TRIPS
+        </text>
+      </g>
     </g>
   );
 }
@@ -161,9 +179,13 @@ function StationLabel({
       y={position.y + position.labelDy}
       textAnchor={position.anchor}
       fontSize={station.transfer_hub_flag ? 12 : 11}
-      fontWeight={station.transfer_hub_flag ? 700 : 500}
-      fill={station.transfer_hub_flag ? '#ffffff' : '#cbd5e1'}
-      className="drop-shadow-sm pointer-events-none select-none"
+      fontWeight={station.transfer_hub_flag ? 900 : 800}
+      fill="#000000"
+      paintOrder="stroke fill"
+      stroke="#FFFFFF"
+      strokeWidth={4}
+      strokeLinejoin="round"
+      className="pointer-events-none select-none tracking-tight font-sans"
     >
       {station.name}
     </text>
@@ -179,6 +201,7 @@ export function TransitGraph({
   onSelectStation,
 }: TransitGraphProps) {
   const [internalSelectedStationId, setInternalSelectedStationId] = useState<number>(3);
+  const graphRef = useRef<HTMLElement>(null);
 
   const selectedStationId = externalSelectedStationId !== undefined
     ? externalSelectedStationId
@@ -191,6 +214,67 @@ export function TransitGraph({
       setInternalSelectedStationId(id);
     }
   }
+
+  // GSAP: Ambient Train Hover and Station Radial Pop-in
+  useGSAP(
+    () => {
+      // Train glyph subtle floating animation
+      gsap.to('.gsap-train-glyph', {
+        y: '-=2.5',
+        duration: 1.8,
+        yoyo: true,
+        repeat: -1,
+        ease: 'sine.inOut',
+        stagger: 0.25,
+      });
+
+      // Station nodes initial radial bounce
+      if (snapshot?.stations.length) {
+        gsap.from('.gsap-station-node', {
+          scale: 0.65,
+          opacity: 0,
+          duration: 0.55,
+          stagger: {
+            each: 0.035,
+            from: 'center',
+          },
+          ease: 'back.out(2)',
+        });
+      }
+
+      // Quick focus buttons stagger
+      gsap.from('.gsap-focus-chip', {
+        scale: 0.88,
+        opacity: 0,
+        duration: 0.45,
+        stagger: 0.04,
+        ease: 'power2.out',
+      });
+    },
+    { scope: graphRef, dependencies: [Boolean(snapshot)] },
+  );
+
+  // GSAP: Dynamic alert pulse when cascade occurs
+  useGSAP(
+    () => {
+      if (cascade) {
+        gsap.from('.gsap-affected-edge', {
+          strokeDashoffset: 100,
+          opacity: 0.3,
+          duration: 0.75,
+          ease: 'power2.out',
+        });
+        gsap.from('.gsap-affected-beacon', {
+          scale: 0,
+          opacity: 0,
+          duration: 0.5,
+          stagger: 0.1,
+          ease: 'elastic.out(1, 0.75)',
+        });
+      }
+    },
+    { scope: graphRef, dependencies: [cascade] },
+  );
 
   const edges = useMemo(
     () => (snapshot ? buildEdges(snapshot.stationSchedule) : []),
@@ -271,38 +355,41 @@ export function TransitGraph({
   }, [snapshot]);
 
   return (
-    <section className="bento-card p-5 h-full flex flex-col justify-between">
+    <section
+      ref={graphRef}
+      className="brutal-card p-5 h-full flex flex-col justify-between bg-white border-[2.5px] border-black shadow-[5px_5px_0px_0px_#000000]"
+    >
       <div>
-        {/* Bento Card Header */}
+        {/* Card Header */}
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-sky-400">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] bg-black text-[#FFE600] px-2 py-0.5 rounded">
                 Network Topology
               </span>
-              <span className="rounded bg-white/5 px-1.5 py-0.5 font-mono text-[9px] text-slate-400 border border-white/5">
-                Metropolitan Grid
+              <span className="rounded bg-[#FAF8F5] px-2 py-0.5 font-mono text-[9px] font-bold text-black border-2 border-black shadow-[1px_1px_0px_0px_#000]">
+                METRO GRID
               </span>
             </div>
-            <h2 className="mt-1 flex items-center gap-2 text-lg font-bold text-white sm:text-xl">
-              <Radio className="h-5 w-5 text-sky-400 shrink-0" />
+            <h2 className="mt-1 flex items-center gap-2 text-lg font-black text-black sm:text-xl">
+              <Radio className="h-5 w-5 text-black stroke-[2.5] shrink-0" />
               <span>Live Transit Dependency Map</span>
             </h2>
           </div>
 
           {/* Map Legend */}
-          <div className="flex items-center gap-3 text-[11px] font-medium text-slate-400 bg-white/[0.02] border border-white/5 px-3 py-1.5 rounded-xl">
+          <div className="flex items-center gap-3 text-[11px] font-black text-black bg-[#FAF8F5] border-2 border-black px-3 py-1.5 rounded-xl shadow-[2px_2px_0px_0px_#000]">
             <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/50" />
+              <span className="h-3 w-3 rounded-full bg-[#4EFA8B] border border-black shadow-[1px_1px_0px_0px_#000]" />
               <span>Normal</span>
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-amber-400 shadow-sm shadow-amber-400/50" />
+              <span className="h-3 w-3 rounded-full bg-[#FFE600] border border-black shadow-[1px_1px_0px_0px_#000]" />
               <span>Minor Delay</span>
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-rose-500 shadow-sm shadow-rose-500/50 animate-pulse" />
-              <span>Severe / Blocked</span>
+              <span className="h-3 w-3 rounded-full bg-[#FF5757] border border-black shadow-[1px_1px_0px_0px_#000] animate-pulse" />
+              <span>Severe / Cascade</span>
             </span>
           </div>
         </div>
@@ -310,8 +397,8 @@ export function TransitGraph({
         {/* Quick Station Focus Chips */}
         {snapshot ? (
           <div className="mt-3.5 flex flex-wrap items-center gap-1.5">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500 mr-1 flex items-center gap-1">
-              <MapPin className="h-3 w-3" /> Quick Focus:
+            <span className="text-[10px] font-black uppercase tracking-[0.15em] text-black mr-1 flex items-center gap-1">
+              <MapPin className="h-3 w-3 stroke-[2.5]" /> Focus:
             </span>
             {quickStations.map((stn) => {
               const active = stn.id === selectedStationId;
@@ -322,17 +409,17 @@ export function TransitGraph({
                   key={stn.id}
                   type="button"
                   onClick={() => handleSelectStation(stn.id)}
-                  className={`group flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs cursor-pointer transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
+                  className={`gsap-focus-chip group flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs cursor-pointer transition-all duration-120 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black ${
                     active
-                      ? 'bg-sky-500 text-slate-950 font-bold shadow-md shadow-sky-500/20 ring-1 ring-sky-400'
+                      ? 'bg-[#FFE600] text-black font-black border-2 border-black shadow-[3px_3px_0px_0px_#000] -translate-y-0.5'
                       : isAffected
-                        ? 'bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25'
-                        : 'bg-white/[0.04] text-slate-300 border border-white/5 hover:bg-white/[0.08] hover:text-white'
+                        ? 'bg-[#FF5757] text-white font-black border-2 border-black shadow-[2px_2px_0px_0px_#000] hover:bg-rose-600'
+                        : 'bg-white text-black font-bold border-2 border-black shadow-[2px_2px_0px_0px_#000] hover:bg-slate-100 hover:-translate-y-0.5'
                   }`}
                 >
                   <span>{stn.name}</span>
                   {isAffected ? (
-                    <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-ping" />
+                    <span className="h-2 w-2 rounded-full bg-white border border-black animate-ping" />
                   ) : null}
                 </button>
               );
@@ -342,27 +429,27 @@ export function TransitGraph({
 
         {/* Error Alert */}
         {error ? (
-          <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3.5 text-sm text-rose-200">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-400" />
+          <div className="mt-4 flex items-start gap-2.5 rounded-xl border-2 border-black bg-[#FF5757] p-3.5 text-sm font-black text-white shadow-[4px_4px_0px_0px_#000]">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 stroke-[2.5]" />
             <span>{error}</span>
           </div>
         ) : null}
 
         {/* Loading Skeleton */}
         {!snapshot && loading ? (
-          <div className="mt-4 h-[440px] animate-pulse rounded-2xl border border-white/5 bg-white/[0.02]" />
+          <div className="mt-4 h-[440px] animate-pulse rounded-2xl border-2 border-black bg-slate-100 shadow-[4px_4px_0px_0px_#000]" />
         ) : null}
 
         {/* Empty State */}
         {!snapshot && !loading && !error ? (
-          <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.02] p-8 text-center text-sm text-slate-400">
+          <div className="mt-4 rounded-2xl border-2 border-dashed border-black bg-[#FAF8F5] p-8 text-center text-sm font-bold text-black">
             Network data is currently not available.
           </div>
         ) : null}
 
         {/* Interactive SVG Network Map */}
         {snapshot ? (
-          <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-[#040711] shadow-inner relative">
+          <div className="mt-4 overflow-hidden rounded-2xl border-[2.5px] border-black bg-[#FFFDF8] shadow-[4px_4px_0px_0px_#000000] relative">
             <svg
               viewBox="0 0 700 470"
               role="img"
@@ -371,7 +458,7 @@ export function TransitGraph({
             >
               <defs>
                 <pattern
-                  id="transit-grid-bento"
+                  id="transit-grid-brutal"
                   width="35"
                   height="35"
                   patternUnits="userSpaceOnUse"
@@ -379,19 +466,14 @@ export function TransitGraph({
                   <path
                     d="M 35 0 L 0 0 0 35"
                     fill="none"
-                    stroke="#1e293b"
-                    strokeWidth="0.8"
-                    opacity="0.3"
+                    stroke="#E5E0D8"
+                    strokeWidth="1"
                   />
+                  <circle cx="0" cy="0" r="1.5" fill="#D1CABE" />
                 </pattern>
-                {/* Glow Filter */}
-                <filter id="neon-glow" x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur stdDeviation="3" result="blur" />
-                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                </filter>
               </defs>
 
-              <rect width="700" height="470" fill="url(#transit-grid-bento)" />
+              <rect width="700" height="470" fill="url(#transit-grid-brutal)" />
 
               {/* Transit Line Edges */}
               {edges.map((edge) => {
@@ -406,26 +488,26 @@ export function TransitGraph({
 
                 return (
                   <g key={edge.key}>
-                    {/* Underlying Track */}
+                    {/* Underlying Track Shadow / Base Border */}
                     <line
                       x1={from.x}
                       y1={from.y}
                       x2={to.x}
                       y2={to.y}
-                      stroke="#0f172a"
-                      strokeWidth={10}
+                      stroke="#000000"
+                      strokeWidth={11}
                       strokeLinecap="round"
                     />
-                    {/* Active Line Color */}
+                    {/* Active Line Color Track */}
                     <line
                       x1={from.x}
                       y1={from.y}
                       x2={to.x}
                       y2={to.y}
                       stroke={edge.color}
-                      strokeWidth={impacted ? 8 : 6}
+                      strokeWidth={impacted ? 8 : 7}
                       strokeLinecap="round"
-                      opacity={impacted ? 0.95 : 0.75}
+                      opacity={impacted ? 1 : 0.9}
                     />
                     {/* Impacted Pulsing Dash */}
                     {impacted ? (
@@ -434,11 +516,11 @@ export function TransitGraph({
                         y1={from.y}
                         x2={to.x}
                         y2={to.y}
-                        stroke="#f59e0b"
-                        strokeWidth={3.5}
+                        stroke="#FFE600"
+                        strokeWidth={4}
                         strokeLinecap="round"
-                        strokeDasharray="6 8"
-                        className="animate-pulse"
+                        strokeDasharray="8 8"
+                        className="gsap-affected-edge animate-pulse"
                       />
                     ) : null}
                   </g>
@@ -469,8 +551,8 @@ export function TransitGraph({
                   return null;
                 }
 
-                const color = stationColors.get(station.station_id) ?? '#94a3b8';
-                const radius = station.transfer_hub_flag ? 12 : 8.5;
+                const color = stationColors.get(station.station_id) ?? '#000000';
+                const radius = station.transfer_hub_flag ? 12.5 : 9;
                 const selected = station.station_id === selectedStationId;
                 const impacted = affectedStationIds.has(station.station_id);
 
@@ -480,7 +562,7 @@ export function TransitGraph({
                     role="button"
                     tabIndex={0}
                     aria-label={`Inspect station ${station.name}`}
-                    className="cursor-pointer outline-none transition-transform duration-200 focus-visible:opacity-90"
+                    className="gsap-station-node cursor-pointer outline-none transition-transform duration-150"
                     onClick={() => handleSelectStation(station.station_id)}
                     onKeyDown={(event) => {
                       if (event.key === 'Enter' || event.key === ' ') {
@@ -491,15 +573,15 @@ export function TransitGraph({
                   >
                     <title>{`${station.name} (${station.code}) - Click to inspect departures`}</title>
 
-                    {/* Disruption Cascade Beacon */}
+                    {/* Disruption Cascade Ping */}
                     {impacted ? (
                       <circle
                         cx={position.x}
                         cy={position.y}
                         r={radius + 12}
-                        fill="#f59e0b"
-                        opacity={0.2}
-                        className="animate-ping"
+                        fill="#FF5757"
+                        opacity={0.35}
+                        className="gsap-affected-beacon animate-ping"
                       />
                     ) : null}
 
@@ -511,29 +593,37 @@ export function TransitGraph({
                           cy={position.y}
                           r={radius + 8}
                           fill="none"
-                          stroke="#38bdf8"
-                          strokeWidth={2}
+                          stroke="#000000"
+                          strokeWidth={2.5}
                           strokeDasharray="4 4"
                           className="animate-spin-slow"
                         />
                         <circle
                           cx={position.x}
                           cy={position.y}
-                          r={radius + 14}
-                          fill="#38bdf8"
-                          opacity={0.12}
+                          r={radius + 13}
+                          fill="#FFE600"
+                          opacity={0.35}
                         />
                       </>
                     ) : null}
+
+                    {/* Node Shadow Offset */}
+                    <circle
+                      cx={position.x + 2}
+                      cy={position.y + 2}
+                      r={radius}
+                      fill="#000000"
+                    />
 
                     {/* Outer Ring */}
                     <circle
                       cx={position.x}
                       cy={position.y}
                       r={radius}
-                      fill="#060913"
-                      stroke={selected ? '#38bdf8' : color}
-                      strokeWidth={selected ? 4.5 : 3.5}
+                      fill={selected ? '#FFE600' : '#FFFFFF'}
+                      stroke="#000000"
+                      strokeWidth={selected ? 4 : 3}
                     />
 
                     {/* Inner Hub Core */}
@@ -541,9 +631,10 @@ export function TransitGraph({
                       <circle
                         cx={position.x}
                         cy={position.y}
-                        r={radius - 5}
+                        r={radius - 4.5}
                         fill={color}
-                        opacity={0.9}
+                        stroke="#000000"
+                        strokeWidth={1.5}
                       />
                     ) : null}
 
@@ -556,17 +647,19 @@ export function TransitGraph({
         ) : null}
       </div>
 
-      {/* Bento Footer summary */}
-      <div className="mt-4 pt-3 border-t border-white/5 flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-500">
+      {/* Footer summary */}
+      <div className="mt-4 pt-3 border-t-2 border-black flex flex-wrap items-center justify-between gap-2 text-[11px] font-bold text-black">
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1.5">
-            <TrainFront className="h-3 w-3 text-sky-400" />
-            <span>15 Stations · 4 Corridors</span>
+            <TrainFront className="h-3.5 w-3.5 text-black stroke-[2.5]" />
+            <span>15 STATIONS · 4 CORRIDORS</span>
           </span>
           <span>·</span>
-          <span>Click any station node or quick-chip to inspect</span>
+          <span className="text-slate-600">Click any station node or focus button</span>
         </div>
-        <span className="font-mono text-slate-400">Station ID #{selectedStationId} selected</span>
+        <span className="font-mono font-black text-black bg-[#FFE600] px-2 py-0.5 rounded border border-black shadow-[1px_1px_0px_0px_#000]">
+          STATION ID #{selectedStationId}
+        </span>
       </div>
     </section>
   );

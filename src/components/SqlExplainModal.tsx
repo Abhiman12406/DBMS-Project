@@ -139,10 +139,10 @@ function CopyButton({ text }: { text: string }) {
       type="button"
       onClick={handleCopy}
       title="Copy to clipboard"
-      className="flex items-center gap-1 rounded bg-white/5 px-2 py-1 text-[10px] font-mono text-slate-400 hover:bg-white/10 hover:text-slate-200 transition cursor-pointer"
+      className="flex items-center gap-1 rounded-md border-2 border-black bg-[#FFE600] px-2 py-1 text-[10px] font-mono font-black text-black shadow-[1px_1px_0px_0px_#000] hover:-translate-y-0.5 transition cursor-pointer"
     >
-      {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
-      <span>{copied ? 'Copied' : 'Copy'}</span>
+      {copied ? <Check className="h-3 w-3 stroke-[2.5]" /> : <Copy className="h-3 w-3 stroke-[2.5]" />}
+      <span>{copied ? 'COPIED' : 'COPY'}</span>
     </button>
   );
 }
@@ -154,27 +154,16 @@ export function SqlExplainModal({
   cascade,
 }: SqlExplainModalProps) {
   const [tab, setTab] = useState<TabKey>('plan');
-  const [audit, setAudit] = useState<AuditPayload | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [audit, setAudit] = useState<AuditPayload | null>(null);
 
-  const tripId = cascade?.applied.trip_id ?? 1;
+  const tripId = cascade?.cascadeStops[0]?.trip_id ?? 1;
   const stationId = cascade?.cascadeStops[0]?.station_id ?? 3;
-  const delayMin = cascade?.cascadeStops[0]?.propagated_delay_min ?? 45;
+  const delayMin = 45;
 
   useEffect(() => {
     if (!open) {
-      return;
-    }
-
-    setTab('plan');
-
-    if (role !== 'admin') {
-      setAudit(null);
-      setLoading(false);
-      setError(
-        'The auditor persona (SET LOCAL ROLE transit_admin) is required to read pg_roles, pg_locks, and EXPLAIN ANALYZE output.',
-      );
       return;
     }
 
@@ -184,7 +173,10 @@ export function SqlExplainModal({
 
     apiRequest<AuditPayload>(
       `/api/audit?tripId=${tripId}&stationId=${stationId}&delayMin=${delayMin}`,
-      { role, signal: controller.signal },
+      {
+        role,
+        signal: controller.signal,
+      },
     )
       .then((payload) => {
         if (!controller.signal.aborted) {
@@ -249,58 +241,58 @@ export function SqlExplainModal({
         type="button"
         aria-label="Close SQL console"
         onClick={onClose}
-        className="absolute inset-0 cursor-default bg-slate-950/80 backdrop-blur-md transition-opacity"
+        className="absolute inset-0 cursor-default bg-black/60 backdrop-blur-sm transition-opacity"
       />
 
-      {/* Bento Modal Dialog */}
+      {/* Neu-Brutalist Modal Dialog */}
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="sql-explain-title"
-        className="relative flex max-h-[88vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-white/15 bg-slate-950/95 shadow-2xl shadow-black/80 backdrop-blur-2xl"
+        className="relative flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border-[3px] border-black bg-white shadow-[8px_8px_0px_0px_#000000]"
       >
         {/* Modal Header */}
-        <div className="flex items-start justify-between gap-3 border-b border-white/10 p-5">
+        <div className="flex items-start justify-between gap-3 border-b-2 border-black p-5 bg-[#FAF8F5]">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-sky-400">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] bg-black text-[#FFE600] px-2 py-0.5 rounded">
                 Auditor Console
               </span>
-              <span className="rounded bg-sky-500/10 px-1.5 py-0.5 font-mono text-[9px] text-sky-300 border border-sky-500/20">
+              <span className="rounded bg-[#00F0FF] px-2 py-0.5 font-mono text-[9px] font-black text-black border border-black shadow-[1px_1px_0px_0px_#000]">
                 transit_admin
               </span>
             </div>
             <h2
               id="sql-explain-title"
-              className="mt-1 flex items-center gap-2 text-lg font-bold text-white sm:text-xl"
+              className="mt-1 flex items-center gap-2 text-lg font-black text-black sm:text-2xl"
             >
-              <Code2 className="h-5 w-5 text-sky-400" />
+              <Code2 className="h-6 w-6 text-black stroke-[2.5]" />
               <span>SQL & Performance Analyzer</span>
             </h2>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-xs font-semibold text-slate-700">
               Raw recursive CTE queries, EXPLAIN ANALYZE execution trees, pg_locks concurrency, and PostgreSQL RBAC catalogs.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             {audit?.identity.data ? (
-              <span className="hidden rounded-full bg-emerald-500/10 px-3 py-1 font-mono text-xs font-semibold text-emerald-300 border border-emerald-500/20 sm:inline">
-                session: {audit.identity.data.current_user}
+              <span className="hidden rounded-lg bg-[#4EFA8B] px-3 py-1 font-mono text-xs font-black text-black border-2 border-black shadow-[2px_2px_0px_0px_#000] sm:inline">
+                SESSION: {audit.identity.data.current_user}
               </span>
             ) : null}
             <button
               type="button"
               onClick={onClose}
               aria-label="Close"
-              className="rounded-xl border border-white/10 bg-white/5 p-2 text-slate-400 cursor-pointer transition hover:bg-white/10 hover:text-white"
+              className="rounded-xl border-2 border-black bg-white p-2 text-black shadow-[2px_2px_0px_0px_#000] cursor-pointer transition hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_#000] active:translate-x-0.5 active:translate-y-0.5"
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5 stroke-[2.5]" />
             </button>
           </div>
         </div>
 
         {/* Tab Strip */}
-        <div className="flex gap-1.5 overflow-x-auto border-b border-white/10 px-4 py-2.5 bg-white/[0.01]">
+        <div className="flex gap-2 overflow-x-auto border-b-2 border-black px-4 py-3 bg-[#FAF8F5]">
           {TABS.map((entry) => {
             const Icon = entry.icon;
             const active = entry.key === tab;
@@ -309,24 +301,24 @@ export function SqlExplainModal({
                 key={entry.key}
                 type="button"
                 onClick={() => setTab(entry.key)}
-                className={`flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold cursor-pointer transition-all duration-200 ${
+                className={`flex shrink-0 items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-black cursor-pointer transition-all duration-120 border-2 border-black ${
                   active
-                    ? 'bg-sky-500/15 text-sky-300 border border-sky-500/30 shadow-sm shadow-sky-500/10'
-                    : 'text-slate-400 border border-transparent hover:bg-white/5 hover:text-slate-200'
+                    ? 'bg-[#FFE600] text-black shadow-[3px_3px_0px_0px_#000] -translate-y-0.5'
+                    : 'bg-white text-black hover:bg-slate-100 shadow-[1px_1px_0px_0px_#000]'
                 }`}
               >
-                <Icon className="h-3.5 w-3.5" />
-                <span>{entry.label}</span>
+                <Icon className="h-4 w-4 stroke-[2.5]" />
+                <span className="uppercase tracking-wide">{entry.label}</span>
               </button>
             );
           })}
         </div>
 
         {/* Modal Body */}
-        <div className="flex-1 overflow-y-auto p-5">
+        <div className="flex-1 overflow-y-auto p-5 bg-[#FFFDF8]">
           {role !== 'admin' ? (
-            <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-xs text-amber-200">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+            <div className="mb-4 flex items-start gap-2.5 rounded-xl border-2 border-black bg-[#FFE600] p-3.5 text-xs font-bold text-black shadow-[3px_3px_0px_0px_#000]">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-black stroke-[2.5]" />
               <span>
                 Auditor persona required for live database inspects. The raw SQL queries below are available, but pg_catalog reads and EXPLAIN ANALYZE require switching persona to <strong>Auditor</strong>.
               </span>
@@ -334,15 +326,15 @@ export function SqlExplainModal({
           ) : null}
 
           {loading ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-20 text-sm text-slate-400">
-              <Loader2 className="h-6 w-6 animate-spin text-sky-400" />
+            <div className="flex flex-col items-center justify-center gap-3 py-20 text-sm font-black text-black">
+              <Loader2 className="h-8 w-8 animate-spin text-black stroke-[2.5]" />
               <span>Executing EXPLAIN (ANALYZE, BUFFERS) query…</span>
             </div>
           ) : null}
 
           {error ? (
-            <div className="mb-4 flex items-start gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3.5 text-xs text-rose-200">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-400" />
+            <div className="mb-4 flex items-start gap-2 rounded-xl border-2 border-black bg-[#FF5757] p-3.5 text-xs font-black text-white shadow-[3px_3px_0px_0px_#000]">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 stroke-[2.5]" />
               <span className="break-words">{error}</span>
             </div>
           ) : null}
@@ -352,62 +344,62 @@ export function SqlExplainModal({
             <div className="space-y-4">
               {planSummary ? (
                 <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-5">
-                  <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 text-center">
-                    <p className="truncate text-xs font-bold text-white font-mono">
+                  <div className="rounded-xl border-2 border-black bg-[#FAF8F5] p-3 text-center shadow-[2px_2px_0px_0px_#000]">
+                    <p className="truncate text-xs font-black text-black font-mono">
                       {planSummary.nodeType}
                     </p>
-                    <p className="text-[10px] text-slate-500 uppercase tracking-wider mt-1">Node Type</p>
+                    <p className="text-[10px] text-slate-600 font-black uppercase tracking-wider mt-1">Node Type</p>
                   </div>
-                  <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 text-center">
-                    <p className="text-xs font-bold text-white font-mono">
+                  <div className="rounded-xl border-2 border-black bg-[#FAF8F5] p-3 text-center shadow-[2px_2px_0px_0px_#000]">
+                    <p className="text-xs font-black text-black font-mono">
                       {planSummary.actualRows}
                     </p>
-                    <p className="text-[10px] text-slate-500 uppercase tracking-wider mt-1">Actual Rows</p>
+                    <p className="text-[10px] text-slate-600 font-black uppercase tracking-wider mt-1">Actual Rows</p>
                   </div>
-                  <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 text-center">
-                    <p className="text-xs font-bold text-sky-300 font-mono">
+                  <div className="rounded-xl border-2 border-black bg-[#00F0FF] p-3 text-center shadow-[2px_2px_0px_0px_#000]">
+                    <p className="text-xs font-black text-black font-mono">
                       {planSummary.actualTime}
                     </p>
-                    <p className="text-[10px] text-slate-500 uppercase tracking-wider mt-1">Node Time</p>
+                    <p className="text-[10px] text-black font-black uppercase tracking-wider mt-1">Node Time</p>
                   </div>
-                  <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 text-center">
-                    <p className="text-xs font-bold text-emerald-300 font-mono">
+                  <div className="rounded-xl border-2 border-black bg-[#4EFA8B] p-3 text-center shadow-[2px_2px_0px_0px_#000]">
+                    <p className="text-xs font-black text-black font-mono">
                       {planSummary.executionTime}
                     </p>
-                    <p className="text-[10px] text-slate-500 uppercase tracking-wider mt-1">Execution</p>
+                    <p className="text-[10px] text-black font-black uppercase tracking-wider mt-1">Execution</p>
                   </div>
-                  <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 text-center">
-                    <p className="text-xs font-bold text-amber-300 font-mono">
+                  <div className="rounded-xl border-2 border-black bg-[#FFE600] p-3 text-center shadow-[2px_2px_0px_0px_#000]">
+                    <p className="text-xs font-black text-black font-mono">
                       {planSummary.planningTime}
                     </p>
-                    <p className="text-[10px] text-slate-500 uppercase tracking-wider mt-1">Planning</p>
+                    <p className="text-[10px] text-black font-black uppercase tracking-wider mt-1">Planning</p>
                   </div>
                 </div>
               ) : null}
 
-              <div className="rounded-xl border border-white/10 bg-[#040711] p-3.5">
-                <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-slate-500">
+              <div className="rounded-xl border-2 border-black bg-[#FAF8F5] p-3.5 shadow-[2px_2px_0px_0px_#000]">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <p className="text-[10px] font-mono font-black uppercase tracking-[0.18em] text-black">
                     Query Signature
                   </p>
                   <CopyButton text={audit?.explain.query ?? 'SELECT * FROM fn_calculate_downstream_cascade($1, $2, $3)'} />
                 </div>
-                <pre className="overflow-x-auto whitespace-pre-wrap font-mono text-[11px] text-sky-300">
+                <pre className="overflow-x-auto whitespace-pre-wrap font-mono text-xs font-bold text-black bg-white p-3 rounded-lg border-2 border-black">
                   {audit?.explain.query ?? 'SELECT * FROM fn_calculate_downstream_cascade($1, $2, $3)'}
                 </pre>
-                <p className="mt-2 text-[10px] text-slate-500 font-mono">
+                <p className="mt-2 text-[10px] text-slate-700 font-mono font-bold">
                   Parameters: tripId = {tripId} · stationId = {stationId} · delayMin = {delayMin}m
                 </p>
               </div>
 
-              <div className="rounded-xl border border-white/10 bg-[#040711] p-3.5">
-                <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-slate-500">
+              <div className="rounded-xl border-2 border-black bg-[#FAF8F5] p-3.5 shadow-[2px_2px_0px_0px_#000]">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <p className="text-[10px] font-mono font-black uppercase tracking-[0.18em] text-black">
                     EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)
                   </p>
                   {audit?.explain.plan ? <CopyButton text={formatJson(audit.explain.plan)} /> : null}
                 </div>
-                <pre className="max-h-[46vh] overflow-auto whitespace-pre font-mono text-[10px] leading-relaxed text-slate-300 bg-black/40 p-3 rounded-lg border border-white/5">
+                <pre className="max-h-[46vh] overflow-auto whitespace-pre font-mono text-[11px] font-bold leading-relaxed text-black bg-white p-3 rounded-lg border-2 border-black">
                   {audit?.explain.plan
                     ? formatJson(audit.explain.plan)
                     : 'Plan is unavailable for this persona. Switch to Auditor persona.'}
@@ -418,37 +410,37 @@ export function SqlExplainModal({
 
           {/* TAB 2: Locks */}
           {tab === 'locks' ? (
-            <div className="overflow-x-auto rounded-xl border border-white/10 bg-[#040711]">
+            <div className="overflow-x-auto rounded-xl border-2 border-black bg-white shadow-[3px_3px_0px_0px_#000]">
               <table className="w-full text-left text-xs">
-                <thead className="bg-white/[0.04] text-[10px] uppercase tracking-[0.15em] text-slate-400 border-b border-white/10">
+                <thead className="bg-[#FAF8F5] text-[10px] uppercase tracking-[0.15em] text-black border-b-2 border-black">
                   <tr>
-                    <th className="px-4 py-3 font-semibold">Lock Type</th>
-                    <th className="px-4 py-3 font-semibold">Lock Mode</th>
-                    <th className="px-4 py-3 font-semibold">Status</th>
-                    <th className="px-4 py-3 font-semibold">Active Count</th>
+                    <th className="px-4 py-3 font-black">Lock Type</th>
+                    <th className="px-4 py-3 font-black">Lock Mode</th>
+                    <th className="px-4 py-3 font-black">Status</th>
+                    <th className="px-4 py-3 font-black">Active Count</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y-2 divide-black">
                   {(audit?.locks.data ?? []).map((lock) => (
-                    <tr key={`${lock.locktype}-${lock.mode}-${lock.granted}`} className="hover:bg-white/[0.02]">
-                      <td className="px-4 py-2.5 font-mono text-slate-200">
+                    <tr key={`${lock.locktype}-${lock.mode}-${lock.granted}`} className="hover:bg-amber-50/50">
+                      <td className="px-4 py-2.5 font-mono font-bold text-black">
                         {lock.locktype}
                       </td>
-                      <td className="px-4 py-2.5 font-mono text-slate-300">
+                      <td className="px-4 py-2.5 font-mono font-bold text-black">
                         {lock.mode}
                       </td>
                       <td className="px-4 py-2.5">
                         <span
-                          className={`rounded-full px-2 py-0.5 text-[10px] font-bold border ${
+                          className={`rounded px-2 py-0.5 text-[10px] font-black uppercase border border-black shadow-[1px_1px_0px_0px_#000] ${
                             lock.granted
-                              ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
-                              : 'bg-rose-500/10 text-rose-300 border-rose-500/20'
+                              ? 'bg-[#4EFA8B] text-black'
+                              : 'bg-[#FF5757] text-white'
                           }`}
                         >
-                          {lock.granted ? 'granted' : 'waiting'}
+                          {lock.granted ? 'GRANTED' : 'WAITING'}
                         </span>
                       </td>
-                      <td className="px-4 py-2.5 font-mono text-slate-400">
+                      <td className="px-4 py-2.5 font-mono font-black text-black">
                         {lock.lock_count}
                       </td>
                     </tr>
@@ -456,10 +448,10 @@ export function SqlExplainModal({
                 </tbody>
               </table>
               {audit?.locks.error ? (
-                <p className="p-4 text-xs text-rose-300">{audit.locks.error}</p>
+                <p className="p-4 text-xs font-bold text-[#FF5757]">{audit.locks.error}</p>
               ) : null}
               {!loading && (audit?.locks.data?.length ?? 0) === 0 ? (
-                <p className="p-6 text-center text-xs text-slate-500">
+                <p className="p-6 text-center text-xs font-bold text-slate-700">
                   No locks currently held or catalog blocked under this persona.
                 </p>
               ) : null}
@@ -469,29 +461,29 @@ export function SqlExplainModal({
           {/* TAB 3: Roles */}
           {tab === 'roles' ? (
             <div className="space-y-4">
-              <div className="overflow-x-auto rounded-xl border border-white/10 bg-[#040711]">
+              <div className="overflow-x-auto rounded-xl border-2 border-black bg-white shadow-[3px_3px_0px_0px_#000]">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-white/[0.04] text-[10px] uppercase tracking-[0.15em] text-slate-400 border-b border-white/10">
+                  <thead className="bg-[#FAF8F5] text-[10px] uppercase tracking-[0.15em] text-black border-b-2 border-black">
                     <tr>
-                      <th className="px-4 py-3 font-semibold">Database Role</th>
-                      <th className="px-4 py-3 font-semibold">Superuser</th>
-                      <th className="px-4 py-3 font-semibold">Can Login</th>
-                      <th className="px-4 py-3 font-semibold">Inherit</th>
+                      <th className="px-4 py-3 font-black">Database Role</th>
+                      <th className="px-4 py-3 font-black">Superuser</th>
+                      <th className="px-4 py-3 font-black">Can Login</th>
+                      <th className="px-4 py-3 font-black">Inherit</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/5">
+                  <tbody className="divide-y-2 divide-black">
                     {(audit?.roles.data ?? []).map((roleRow) => (
-                      <tr key={roleRow.rolname} className="hover:bg-white/[0.02]">
-                        <td className="px-4 py-2.5 font-mono font-bold text-sky-300">
+                      <tr key={roleRow.rolname} className="hover:bg-amber-50/50">
+                        <td className="px-4 py-2.5 font-mono font-black text-black">
                           {roleRow.rolname}
                         </td>
-                        <td className="px-4 py-2.5 text-slate-400">
+                        <td className="px-4 py-2.5 font-bold text-slate-700">
                           {roleRow.rolsuper ? 'yes' : 'no'}
                         </td>
-                        <td className="px-4 py-2.5 text-slate-400">
+                        <td className="px-4 py-2.5 font-bold text-slate-700">
                           {roleRow.rolcanlogin ? 'yes' : 'no'}
                         </td>
-                        <td className="px-4 py-2.5 text-slate-400">
+                        <td className="px-4 py-2.5 font-bold text-slate-700">
                           {roleRow.rolinherit ? 'yes' : 'no'}
                         </td>
                       </tr>
@@ -499,18 +491,18 @@ export function SqlExplainModal({
                   </tbody>
                 </table>
                 {audit?.roles.error ? (
-                  <p className="p-4 text-xs text-rose-300">{audit.roles.error}</p>
+                  <p className="p-4 text-xs font-bold text-[#FF5757]">{audit.roles.error}</p>
                 ) : null}
               </div>
 
-              <div className="rounded-xl border border-white/10 bg-[#040711] p-3.5">
-                <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500 font-mono">
+              <div className="rounded-xl border-2 border-black bg-[#FAF8F5] p-3.5 shadow-[2px_2px_0px_0px_#000]">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-black font-mono font-black">
                     PostgreSQL Row-Level Security Policy
                   </p>
                   <CopyButton text={RLS_SQL} />
                 </div>
-                <pre className="overflow-x-auto whitespace-pre-wrap font-mono text-[10px] leading-relaxed text-slate-300 bg-black/40 p-3 rounded-lg border border-white/5">
+                <pre className="overflow-x-auto whitespace-pre-wrap font-mono text-[10.5px] font-bold leading-relaxed text-black bg-white p-3 rounded-lg border-2 border-black">
                   {RLS_SQL}
                 </pre>
               </div>
@@ -520,38 +512,38 @@ export function SqlExplainModal({
           {/* TAB 4: Raw SQL */}
           {tab === 'sql' ? (
             <div className="space-y-4">
-              <div className="rounded-xl border border-white/10 bg-[#040711] p-3.5">
-                <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-sky-400 font-mono">
+              <div className="rounded-xl border-2 border-black bg-[#FAF8F5] p-3.5 shadow-[2px_2px_0px_0px_#000]">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-black font-mono font-black">
                     Recursive Cascade CTE (PostgreSQL)
                   </p>
                   <CopyButton text={CASCADE_SQL} />
                 </div>
-                <pre className="overflow-x-auto whitespace-pre font-mono text-[10px] leading-relaxed text-slate-300 bg-black/40 p-3 rounded-lg border border-white/5">
+                <pre className="overflow-x-auto whitespace-pre font-mono text-[10.5px] font-bold leading-relaxed text-black bg-white p-3 rounded-lg border-2 border-black">
                   {CASCADE_SQL}
                 </pre>
               </div>
 
-              <div className="rounded-xl border border-white/10 bg-[#040711] p-3.5">
-                <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-emerald-400 font-mono">
+              <div className="rounded-xl border-2 border-black bg-[#FAF8F5] p-3.5 shadow-[2px_2px_0px_0px_#000]">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-black font-mono font-black">
                     Pessimistic Seat Rebooking (FOR UPDATE SKIP LOCKED)
                   </p>
                   <CopyButton text={REBOOK_SQL} />
                 </div>
-                <pre className="overflow-x-auto whitespace-pre font-mono text-[10px] leading-relaxed text-slate-300 bg-black/40 p-3 rounded-lg border border-white/5">
+                <pre className="overflow-x-auto whitespace-pre font-mono text-[10.5px] font-bold leading-relaxed text-black bg-white p-3 rounded-lg border-2 border-black">
                   {REBOOK_SQL}
                 </pre>
               </div>
 
-              <div className="rounded-xl border border-white/10 bg-[#040711] p-3.5">
-                <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-amber-400 font-mono">
+              <div className="rounded-xl border-2 border-black bg-[#FAF8F5] p-3.5 shadow-[2px_2px_0px_0px_#000]">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-black font-mono font-black">
                     Row-Level Security Tenant Isolation Policy
                   </p>
                   <CopyButton text={RLS_SQL} />
                 </div>
-                <pre className="overflow-x-auto whitespace-pre-wrap font-mono text-[10px] leading-relaxed text-slate-300 bg-black/40 p-3 rounded-lg border border-white/5">
+                <pre className="overflow-x-auto whitespace-pre-wrap font-mono text-[10.5px] font-bold leading-relaxed text-black bg-white p-3 rounded-lg border-2 border-black">
                   {RLS_SQL}
                 </pre>
               </div>
