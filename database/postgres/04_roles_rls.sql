@@ -6,40 +6,21 @@
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
--- 1. CLEANUP & ROLE RE-CREATION
+-- 1. IDEMPOTENT ROLE CREATION
 -- ----------------------------------------------------------------------------
--- Revoke existing permissions and drop roles cleanly if re-run
+-- Create database persona roles if they do not already exist
 DO $$
 BEGIN
-    -- Drop roles if they exist
-    IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'passenger_role') THEN
-        DROP ROLE passenger_role;
+    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'transit_admin') THEN
+        CREATE ROLE transit_admin WITH NOLOGIN INHERIT;
     END IF;
-    IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'dispatcher_role') THEN
-        DROP ROLE dispatcher_role;
+    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'dispatcher_role') THEN
+        CREATE ROLE dispatcher_role WITH NOLOGIN INHERIT;
     END IF;
-    IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'transit_admin') THEN
-        DROP ROLE transit_admin;
+    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'passenger_role') THEN
+        CREATE ROLE passenger_role WITH NOLOGIN INHERIT;
     END IF;
 END $$;
-
--- ----------------------------------------------------------------------------
--- 2. CREATE DATABASE PERSONA ROLES
--- ----------------------------------------------------------------------------
--- transit_admin: Full operational administrator with catalog and DDL control
-CREATE ROLE transit_admin WITH 
-    NOLOGIN 
-    INHERIT;
-
--- dispatcher_role: Operations controller able to manage trips, delays, and rebookings
-CREATE ROLE dispatcher_role WITH 
-    NOLOGIN 
-    INHERIT;
-
--- passenger_role: End-consumer restricted to public monitors and self-itinerary
-CREATE ROLE passenger_role WITH 
-    NOLOGIN 
-    INHERIT;
 
 -- Grant role membership to current admin (postgres) so session can SET ROLE dynamically
 GRANT transit_admin TO CURRENT_USER;

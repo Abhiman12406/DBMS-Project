@@ -1,0 +1,51 @@
+# ==============================================================================
+# Render Blueprint Configuration (render.yaml)
+# https://render.com/docs/blueprint-spec
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # Next.js Full-Stack Web Application
+  # ----------------------------------------------------------------------------
+  - type: web
+    name: transit-disruption-engine
+    runtime: node
+    plan: free
+    region: oregon # or frankfurt, ohio, singapore
+    buildCommand: npm install && npm run build
+    preDeployCommand: npm run db:init
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: HOSTNAME
+        value: 0.0.0.0
+      # Auto-wired connection string from Render PostgreSQL instance below
+      - key: DATABASE_URL
+        fromDatabase:
+          name: transit-postgres
+          property: connectionString
+      # MongoDB Atlas connection string (supply your MongoDB Atlas URI in Render dashboard)
+      # e.g.: mongodb+srv://<username>:<password>@cluster0.abcde.mongodb.net/transit_db?retryWrites=true&w=majority
+      - key: MONGODB_URI
+        sync: false
+      - key: POSTGRES_SSL
+        value: "true"
+      - key: PG_POOL_MAX
+        value: "20"
+      - key: MONGO_POOL_MAX
+        value: "20"
+
+# ------------------------------------------------------------------------------
+# Managed Render PostgreSQL Instance
+# ------------------------------------------------------------------------------
+databases:
+  - name: transit-postgres
+    databaseName: transit_db
+    user: postgres
+    plan: free
+    region: oregon
+    postgresMajorVersion: 16

@@ -1,6 +1,7 @@
 import {
   Pool,
   type PoolClient,
+  type PoolConfig,
   type QueryResult,
   type QueryResultRow,
   escapeIdentifier,
@@ -22,18 +23,53 @@ const poolCache = globalThis as unknown as {
   __transitPgPool?: Pool;
 };
 
-export function getPool(): Pool {
-  if (!poolCache.__transitPgPool) {
-    poolCache.__transitPgPool = new Pool({
-      host: process.env.POSTGRES_HOST ?? 'localhost',
-      port: Number(process.env.POSTGRES_PORT ?? 5432),
-      user: process.env.POSTGRES_USER ?? 'postgres',
-      password: process.env.POSTGRES_PASSWORD ?? 'postgres',
-      database: process.env.POSTGRES_DB ?? 'transit_db',
-      max: Number(process.env.PG_POOL_MAX ?? 50),
+export function getPostgresPoolConfig(): PoolConfig {
+  const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+  const isLocal =
+    (!connectionString &&
+      (process.env.POSTGRES_HOST === 'localhost' ||
+        process.env.POSTGRES_HOST === '127.0.0.1' ||
+        !process.env.POSTGRES_HOST)) ||
+    Boolean(
+      connectionString &&
+        (connectionString.includes('localhost') ||
+          connectionString.includes('127.0.0.1')),
+    );
+
+  const sslDisabled =
+    process.env.POSTGRES_SSL === 'false' || process.env.PGSSLMODE === 'disable';
+  const sslEnabled =
+    process.env.POSTGRES_SSL === 'true' || (!sslDisabled && !isLocal);
+
+  const ssl = sslEnabled ? { rejectUnauthorized: false } : undefined;
+  const max = Number(process.env.PG_POOL_MAX ?? (isLocal ? 50 : 20));
+
+  if (connectionString) {
+    return {
+      connectionString,
+      ssl,
+      max,
       idleTimeoutMillis: 30_000,
       connectionTimeoutMillis: 10_000,
-    });
+    };
+  }
+
+  return {
+    host: process.env.POSTGRES_HOST ?? 'localhost',
+    port: Number(process.env.POSTGRES_PORT ?? 5432),
+    user: process.env.POSTGRES_USER ?? 'postgres',
+    password: process.env.POSTGRES_PASSWORD ?? 'postgres',
+    database: process.env.POSTGRES_DB ?? 'transit_db',
+    ssl,
+    max,
+    idleTimeoutMillis: 30_000,
+    connectionTimeoutMillis: 10_000,
+  };
+}
+
+export function getPool(): Pool {
+  if (!poolCache.__transitPgPool) {
+    poolCache.__transitPgPool = new Pool(getPostgresPoolConfig());
   }
   return poolCache.__transitPgPool;
 }
@@ -56,8 +92,10 @@ export async function withPersona<T>(
   const client = await getPool().connect();
   try {
     await client.query('BEGIN');
-    const dbRole = PERSONA_DB_ROLE[persona.role];
-    await client.query(`SET LOCAL ROLE ${escapeIdentifier(dbRole)}`);
+    if (process.env.DISABLE_DB_ROLES !== 'true') {
+      const dbRole = PERSONA_DB_ROLE[persona.role];
+      await client.query(`SET LOCAL ROLE ${escapeIdentifier(dbRole)}`);
+    }
 
     if (persona.role === 'passenger') {
       if (!persona.passengerId) {

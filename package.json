@@ -11,7 +11,14 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "db:check": "tsx scripts/check-connections.ts"
+    "db:check": "tsx scripts/check-connections.ts",
+    "db:init": "tsx scripts/init-db.ts",
+    "db:seed": "tsx scripts/init-db.ts --force",
+    "db:setup": "tsx scripts/init-db.ts",
+    "render-build": "npm run build"
+  },
+  "engines": {
+    "node": ">=20.9.0"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

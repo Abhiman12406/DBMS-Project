@@ -107,6 +107,9 @@ The test suites require live, seeded databases because they exercise the real SQ
 npm run typecheck    # tsc --noEmit
 npm run lint         # next lint
 npm run build        # production build
+npm run db:check     # check DB connectivity and stats
+npm run db:init      # idempotent schema/indexes/seed setup for hosted databases
+npm run db:seed      # force re-creation and re-seeding
 npm run test:watch   # Vitest watch mode
 docker compose down  # stop containers, keep data
 ```
@@ -115,11 +118,81 @@ Environment variables are documented in `.env.example` and default to `transit_d
 
 ---
 
-## 4. Project Structure
+## 4. Deployment to Render (Hosted Databases)
+
+The application is pre-configured for deployment on [Render](https://render.com) with hosted databases (Render Managed PostgreSQL, Neon, Supabase, AWS RDS, and MongoDB Atlas).
+
+### Architecture on Render
+
+```mermaid
+flowchart TD
+    Browser["User Browser"] -->|HTTPS| RenderWeb["Render Web Service<br/>Next.js 15 App Router"]
+    RenderWeb -->|TLS / DATABASE_URL| HostedPG[("Hosted PostgreSQL 16<br/>Render Postgres / Neon / Supabase")]
+    RenderWeb -->|TLS / MONGODB_URI| HostedMongo[("Hosted MongoDB 7+<br/>MongoDB Atlas")]
+```
+
+### Option A: 1-Click Blueprint Deployment (`render.yaml`)
+
+The repository includes a ready-to-use [`render.yaml`](file:///C:/Users/Asus/Desktop/DBMS%20Project/render.yaml) Blueprint:
+
+1. Push your repository to GitHub or GitLab.
+2. In the [Render Dashboard](https://dashboard.render.com), click **New +** > **Blueprint**.
+3. Select this repository. Render automatically reads `render.yaml` and configures:
+   - **Web Service**: Node 20+, `npm install && npm run build`, `npm start` on `0.0.0.0`.
+   - **Pre-Deploy Command**: `npm run db:init` (automatically migrates and seeds schemas before live traffic).
+   - **Health Check**: `/api/health`.
+   - **PostgreSQL Database**: Free/Starter Render Postgres instance, auto-wiring `DATABASE_URL`.
+4. Render will prompt you for the `MONGODB_URI` environment variable:
+   - Create a free cluster on [MongoDB Atlas](https://www.mongodb.com/atlas).
+   - In MongoDB Atlas, create a database named `transit_db`, a database user, and allow network access (`0.0.0.0/0`).
+   - Paste the connection string: `mongodb+srv://<user>:<password>@cluster0.abcde.mongodb.net/transit_db?retryWrites=true&w=majority`.
+5. Click **Apply Blueprint**. Render builds the app, initializes both databases, and starts serving!
+
+---
+
+### Option B: Manual Web Service Setup (Render Dashboard)
+
+If you already have existing hosted PostgreSQL (e.g. Supabase, Neon, AWS RDS) and MongoDB (Atlas):
+
+1. **Create Web Service**: In Render Dashboard, click **New +** > **Web Service** and link your Git repository.
+2. **Configure Service Details**:
+   - **Runtime**: `Node`
+   - **Build Command**: `npm install && npm run build`
+   - **Pre-Deploy Command**: `npm run db:init` *(or append to Build Command: `npm install && npm run build && npm run db:init`)*
+   - **Start Command**: `npm start`
+   - **Health Check Path**: `/api/health`
+3. **Configure Environment Variables**:
+   | Key | Example Value | Description |
+   | :--- | :--- | :--- |
+   | `NODE_ENV` | `production` | Production mode |
+   | `PORT` | `10000` | Port assigned by Render (automatically bound to `0.0.0.0`) |
+   | `DATABASE_URL` | `postgres://user:pass@host.render.com:5432/transit_db?sslmode=require` | Hosted PostgreSQL connection string |
+   | `MONGODB_URI` | `mongodb+srv://user:pass@cluster.mongodb.net/transit_db?retryWrites=true&w=majority` | Hosted MongoDB Atlas connection string |
+   | `POSTGRES_SSL` | `true` | Enforces SSL with self-signed certificate acceptance |
+   | `PG_POOL_MAX` | `20` | Max client pool size (recommended for cloud tiers) |
+   | `MONGO_POOL_MAX`| `20` | Max Mongo pool size |
+4. Click **Deploy Web Service**.
+
+---
+
+### Database Migration & Seed Automation
+
+Because hosted databases start empty without Docker entrypoints, the included [`scripts/init-db.ts`](file:///C:/Users/Asus/Desktop/DBMS%20Project/scripts/init-db.ts) handles migrations and seeding:
+
+- **Idempotent by default**: If tables and collections exist, `npm run db:init` updates SQL views, CTE functions, and roles safely without dropping data.
+- **Auto-initialization**: If tables are missing, it executes `01_schema.sql` through `05_seed_network.sql`, establishes MongoDB JSON schemas, creates indexes, and inserts seed records.
+- **Force re-seed**: Run `npm run db:seed` (or pass `--force`) to recreate all tables and collections from scratch.
+- **Connection Diagnostics**: Run `npm run db:check` to inspect live latency and record counts.
+
+---
+
+### Repository Layout
 
 ```text
 DBMS Project/
-├── docker-compose.yml
+├── render.yaml                # Infrastructure-as-code Blueprint for Render
+├── Dockerfile                 # Multi-stage production container for Render Docker
+├── docker-compose.yml         # Local development orchestrator (Postgres 16 + Mongo 7)
 ├── database/
 │   ├── postgres/
 │   │   ├── 01_schema.sql          # 3NF tables, constraints, indexes
@@ -130,6 +203,9 @@ DBMS Project/
 │   └── mongo/
 │       ├── 01_init_mongo.js       # validator, unique/compound indexes
 │       └── 02_seed_disruptions.js # seed incident documents
+├── scripts/
+│   ├── check-connections.ts   # CLI DB health diagnostics (Postgres + Mongo)
+│   └── init-db.ts             # Idempotent migration & seed tool for hosted DBs
 ├── src/
 │   ├── app/
 │   │   ├── page.tsx               # dashboard composition
@@ -139,7 +215,7 @@ DBMS Project/
 │   │       ├── disruptions/route.ts
 │   │       ├── rebook/route.ts
 │   │       ├── audit/route.ts
-│   │       └── health/route.ts
+│   │       └── health/route.ts    # /api/health check endpoint for Render
 │   ├── components/
 │   │   ├── TransitGraph.tsx
 │   │   ├── DisruptionPanel.tsx
@@ -147,8 +223,8 @@ DBMS Project/
 │   │   ├── PersonaSwitcher.tsx
 │   │   └── SqlExplainModal.tsx
 │   └── lib/
-│       ├── postgres.ts            # pg.Pool + SET LOCAL ROLE helpers
-│       ├── mongodb.ts             # MongoClient singleton
+│       ├── postgres.ts            # pg.Pool with DATABASE_URL & SSL support
+│       ├── mongodb.ts             # MongoClient with MONGODB_URI & Atlas support
 │       ├── cascadeEngine.ts       # hybrid incident propagation
 │       ├── concurrencyEngine.ts   # parallel rebooking runner
 │       └── types.ts

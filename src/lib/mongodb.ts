@@ -8,18 +8,51 @@ const mongoCache = globalThis as unknown as {
 };
 
 export function getMongoUri(): string {
+  if (process.env.MONGODB_URI) {
+    return process.env.MONGODB_URI;
+  }
   if (process.env.MONGO_URI) {
     return process.env.MONGO_URI;
   }
+  if (process.env.MONGO_URL) {
+    return process.env.MONGO_URL;
+  }
   const host = process.env.MONGO_HOST ?? 'localhost';
   const port = process.env.MONGO_PORT ?? '27017';
-  const database = process.env.MONGO_INITDB_DATABASE ?? 'transit_db';
+  const database =
+    process.env.MONGO_INITDB_DATABASE ??
+    process.env.MONGO_DATABASE ??
+    process.env.MONGO_DB_NAME ??
+    'transit_db';
   return `mongodb://${host}:${port}/${database}`;
 }
 
 export function getMongoDatabaseName(): string {
-  const uriDatabase = new URL(getMongoUri()).pathname.replace(/^\//, '');
-  return uriDatabase || process.env.MONGO_INITDB_DATABASE || 'transit_db';
+  if (process.env.MONGO_INITDB_DATABASE) {
+    return process.env.MONGO_INITDB_DATABASE;
+  }
+  if (process.env.MONGO_DATABASE) {
+    return process.env.MONGO_DATABASE;
+  }
+  if (process.env.MONGO_DB_NAME) {
+    return process.env.MONGO_DB_NAME;
+  }
+
+  const uri = getMongoUri();
+  try {
+    const parsed = new URL(uri);
+    const name = parsed.pathname.replace(/^\//, '').split('?')[0];
+    if (name) {
+      return name;
+    }
+  } catch {
+    const match = uri.match(/(?:\/)([a-zA-Z0-9_\-]+)(?:\?|$)/);
+    if (match?.[1]) {
+      return match[1];
+    }
+  }
+
+  return 'transit_db';
 }
 
 export async function getMongoClient(): Promise<MongoClient> {
