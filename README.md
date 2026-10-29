@@ -138,10 +138,10 @@ The repository includes a ready-to-use [`render.yaml`](file:///C:/Users/Asus/Des
 1. Push your repository to GitHub or GitLab.
 2. In the [Render Dashboard](https://dashboard.render.com), click **New +** > **Blueprint**.
 3. Select this repository. Render automatically reads `render.yaml` and configures:
-   - **Web Service**: Node 20+, `npm install && npm run build`, `npm start` on `0.0.0.0`.
-   - **Pre-Deploy Command**: `npm run db:init` (automatically migrates and seeds schemas before live traffic).
+   - **Web Service**: Node 20+, `npm install && npm run build && npm run db:init`, `npm start` on `0.0.0.0`.
+   - **Build Command**: `npm install && npm run build && npm run db:init` (automatically migrates and seeds schemas).
    - **Health Check**: `/api/health`.
-   - **PostgreSQL Database**: Free/Starter Render Postgres instance, auto-wiring `DATABASE_URL`.
+   - **PostgreSQL Database**: Free/Starter Render Postgres instance (`user: transit_user`), auto-wiring `DATABASE_URL`.
 4. Render will prompt you for the `MONGODB_URI` environment variable:
    - Create a free cluster on [MongoDB Atlas](https://www.mongodb.com/atlas).
    - In MongoDB Atlas, create a database named `transit_db`, a database user, and allow network access (`0.0.0.0/0`).
@@ -157,8 +157,7 @@ If you already have existing hosted PostgreSQL (e.g. Supabase, Neon, AWS RDS) an
 1. **Create Web Service**: In Render Dashboard, click **New +** > **Web Service** and link your Git repository.
 2. **Configure Service Details**:
    - **Runtime**: `Node`
-   - **Build Command**: `npm install && npm run build`
-   - **Pre-Deploy Command**: `npm run db:init` *(or append to Build Command: `npm install && npm run build && npm run db:init`)*
+   - **Build Command**: `npm install && npm run build && npm run db:init`
    - **Start Command**: `npm start`
    - **Health Check Path**: `/api/health`
 3. **Configure Environment Variables**:

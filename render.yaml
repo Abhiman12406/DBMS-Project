@@ -12,8 +12,7 @@ services:
     runtime: node
     plan: free
     region: oregon # or frankfurt, ohio, singapore
-    buildCommand: npm install && npm run build
-    preDeployCommand: npm run db:init
+    buildCommand: npm install && npm run build && npm run db:init
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
@@ -45,7 +44,7 @@ services:
 databases:
   - name: transit-postgres
     databaseName: transit_db
-    user: postgres
+    user: transit_user
     plan: free
     region: oregon
     postgresMajorVersion: 16

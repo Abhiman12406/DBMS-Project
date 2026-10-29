@@ -382,15 +382,27 @@ async function main(): Promise<void> {
   console.log('================================================================');
 
   try {
-    await initializePostgres(force);
-    await initializeMongo(force);
+    try {
+      await initializePostgres(force);
+    } catch (error) {
+      console.error('\n❌ PostgreSQL initialization failed:', error);
+      process.exitCode = 1;
+      return;
+    }
+
+    try {
+      await initializeMongo(force);
+    } catch (error) {
+      console.warn('\n⚠️ MongoDB initialization notice:');
+      console.warn((error as Error).message);
+      console.warn(
+        'PostgreSQL initialized successfully. If MONGODB_URI is still pending or not yet whitelisted in Atlas, run "npm run db:init" once MongoDB is connected.\n',
+      );
+    }
 
     console.log('\n================================================================');
-    console.log('🎉 All hosted databases are fully initialized, migrated & ready!');
+    console.log('🎉 Database initialization step completed!');
     console.log('================================================================\n');
-  } catch (error) {
-    console.error('\n❌ Database initialization failed:', error);
-    process.exitCode = 1;
   } finally {
     await Promise.allSettled([closePostgres(), closeMongo()]);
   }
