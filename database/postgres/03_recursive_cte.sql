@@ -359,28 +359,51 @@ BEGIN
         RETURN;
     END IF;
 
-    -- 2. Concurrency Core: Identify and lock an available seat on the target trip
-    -- FOR UPDATE SKIP LOCKED guarantees that concurrent rebooking workers will never
-    -- lock the same seat or deadlock.
-    SELECT 
-        s.seat_id, s.seat_number, c.carriage_number
-    INTO 
-        v_target_seat_id, v_seat_num, v_carriage_num
-    FROM seats s
-    JOIN carriages c ON s.carriage_id = c.carriage_id
-    JOIN trains tr ON c.train_id = tr.train_id
-    JOIN trips t ON tr.train_id = t.train_id
-    WHERE t.trip_id = p_target_trip_id
-      AND NOT EXISTS (
-          SELECT 1 
-          FROM reservations res 
-          WHERE res.trip_id = p_target_trip_id 
-            AND res.seat_id = s.seat_id 
-            AND res.booking_status IN ('CONFIRMED', 'REBOOKED')
-      )
-    ORDER BY s.seat_id ASC
-    FOR UPDATE OF s SKIP LOCKED
-    LIMIT 1;
+    -- 2. Concurrency Core: identify and lock an available seat on the target trip.
+    -- The seat row lock serialises competing workers. The NOT EXISTS predicate can
+    -- be evaluated against a snapshot taken before a competitor committed, so each
+    -- candidate is re-checked with a fresh statement after its row lock is held.
+    LOOP
+        v_target_seat_id := NULL;
+        v_seat_num := NULL;
+        v_carriage_num := NULL;
+
+        SELECT 
+            s.seat_id, s.seat_number, c.carriage_number
+        INTO 
+            v_target_seat_id, v_seat_num, v_carriage_num
+        FROM seats s
+        JOIN carriages c ON s.carriage_id = c.carriage_id
+        JOIN trains tr ON c.train_id = tr.train_id
+        JOIN trips t ON tr.train_id = t.train_id
+        WHERE t.trip_id = p_target_trip_id
+          AND NOT EXISTS (
+              SELECT 1 
+              FROM reservations res 
+              WHERE res.trip_id = p_target_trip_id 
+                AND res.seat_id = s.seat_id 
+                AND res.booking_status IN ('CONFIRMED', 'REBOOKED')
+          )
+        ORDER BY s.seat_id ASC
+        FOR UPDATE OF s SKIP LOCKED
+        LIMIT 1;
+
+        EXIT WHEN v_target_seat_id IS NULL;
+
+        -- Re-check under a fresh snapshot now that the row lock is held.
+        IF NOT EXISTS (
+            SELECT 1
+            FROM reservations res
+            WHERE res.trip_id = p_target_trip_id
+              AND res.seat_id = v_target_seat_id
+              AND res.booking_status IN ('CONFIRMED', 'REBOOKED')
+        ) THEN
+            EXIT;
+        END IF;
+
+        -- The candidate was committed by a competitor while we waited; try the
+        -- next free seat instead of allocating an occupied one.
+    END LOOP;
 
     -- If no seats are left on the alternate trip
     IF v_target_seat_id IS NULL THEN

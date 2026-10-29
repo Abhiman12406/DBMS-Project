@@ -219,6 +219,10 @@ CREATE INDEX idx_timetable_stops_station_scheduled_arr ON timetable_stops(statio
 
 -- Reservations (Critical for Pessimistic Locking & Overbooking Audits)
 CREATE INDEX idx_reservations_trip_seat ON reservations(trip_id, seat_id);
+-- Database-level guarantee: an active reservation may occupy a seat only once per trip.
+CREATE UNIQUE INDEX uq_reservations_active_seat
+    ON reservations(trip_id, seat_id)
+    WHERE booking_status IN ('CONFIRMED', 'REBOOKED');
 CREATE INDEX idx_reservations_passenger_id ON reservations(passenger_id);
 CREATE INDEX idx_reservations_booking_status ON reservations(booking_status);
 CREATE INDEX idx_reservations_reassigned_from ON reservations(reassigned_from_reservation_id);

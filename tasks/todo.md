@@ -111,7 +111,7 @@
 
 ## Phase 3: Application Core & Hybrid Services
 
-- [ ] **Task 8: Initialize Next.js Project & Configure Database Connectors**
+- [x] **Task 8: Initialize Next.js Project & Configure Database Connectors**
   - **Description**: Scaffold Next.js TypeScript app with Tailwind CSS, Lucide icons, and database connection pools (`src/lib/postgres.ts` using `pg.Pool` with role switching support, and `src/lib/mongodb.ts` using `MongoClient`).
   - **Acceptance criteria**:
     - `src/lib/postgres.ts` exposes query helpers for default admin, dispatcher, and passenger personas.
@@ -127,7 +127,7 @@
     - `src/lib/mongodb.ts`
   - **Estimated scope**: M (5 files)
 
-- [ ] **Task 9: Implement Hybrid Cascade & Rebooking Engines**
+- [x] **Task 9: Implement Hybrid Cascade & Rebooking Engines**
   - **Description**: Create `src/lib/cascadeEngine.ts` (ingests Mongo disruption event, applies temporal delay to PostgreSQL `timetable_stops`, calls recursive CTE) and `src/lib/concurrencyEngine.ts` (parallel worker rebooking runner executing `SELECT ... FOR UPDATE SKIP LOCKED` inside explicit ACID transactions).
   - **Acceptance criteria**:
     - `cascadeEngine.propagateDisruption(...)` atomically synchronizes Mongo document status with Postgres timetable adjustments.
@@ -144,14 +144,14 @@
 ---
 
 ### Checkpoint 3: Hybrid Services & Engine Logic
-- [ ] Disruption events sync cleanly from MongoDB into PostgreSQL timetables.
-- [ ] Concurrent rebooking worker reliably executes row-level pessimistic locking without deadlocks.
+- [x] Disruption events sync cleanly from MongoDB into PostgreSQL timetables.
+- [x] Concurrent rebooking worker reliably executes row-level pessimistic locking without deadlocks.
 
 ---
 
 ## Phase 4: API Routes & Persona Context
 
-- [ ] **Task 10: Implement REST API Endpoints**
+- [x] **Task 10: Implement REST API Endpoints**
   - **Description**: Build App Router API routes:
     - `GET /api/network`: Returns transit lines, stations, connections, and live trip status.
     - `POST /api/disruptions`: Ingests incident into MongoDB, updates PostgreSQL, and runs recursive cascade query.
@@ -173,14 +173,14 @@
 ---
 
 ### Checkpoint 4: API Layer
-- [ ] All API endpoints respond with correct database telemetry.
-- [ ] Role-restricted queries appropriately succeed or throw permission errors depending on persona.
+- [x] All API endpoints respond with correct database telemetry.
+- [x] Role-restricted queries appropriately succeed or throw permission errors depending on persona.
 
 ---
 
 ## Phase 5: Interactive Full-Stack Dashboard
 
-- [ ] **Task 11: Build Network Topology Visualizer (`TransitGraph.tsx`)**
+- [x] **Task 11: Build Network Topology Visualizer (`TransitGraph.tsx`)**
   - **Description**: Build an interactive SVG rail network graph displaying 15 stations and 4 color-coded lines, with live status indicators (Green/Yellow/Red), active train icons, and clickable nodes displaying scheduled vs actual timetable data.
   - **Acceptance criteria**:
     - Renders topological layout with clear line paths and transfer hub markers.
@@ -192,7 +192,7 @@
     - `src/components/TransitGraph.tsx`
   - **Estimated scope**: S (1 file)
 
-- [ ] **Task 12: Build Disruption Control Panel & Presets (`DisruptionPanel.tsx`)**
+- [x] **Task 12: Build Disruption Control Panel & Presets (`DisruptionPanel.tsx`)**
   - **Description**: Create the Disruption Panel featuring 1-click incident presets ("Catenary Failure @ Central Hub", "Signal Glitch @ West Junction", "Track Maintenance Delay") plus a custom JSON editor for MongoDB incident payloads.
   - **Acceptance criteria**:
     - One-click trigger inserts document into MongoDB and immediately triggers visual cascade on the graph.
@@ -204,7 +204,7 @@
     - `src/components/DisruptionPanel.tsx`
   - **Estimated scope**: S (1 file)
 
-- [ ] **Task 13: Build Concurrency Arena & Stress-Tester (`ConcurrencyArena.tsx`)**
+- [x] **Task 13: Build Concurrency Arena & Stress-Tester (`ConcurrencyArena.tsx`)**
   - **Description**: Implement the Concurrency Arena component showing stranded passengers, available replacement seats, a configurable worker slider (10–50 parallel transactions), and a live "Execute Concurrent Rebooking" action.
   - **Acceptance criteria**:
     - Displays live transaction worker cards with status (Locking, Rebooked, Waitlisted).
@@ -216,7 +216,7 @@
     - `src/components/ConcurrencyArena.tsx`
   - **Estimated scope**: S (1 file)
 
-- [ ] **Task 14: Implement Persona Switcher, Audit Modal & Main Page Layout**
+- [x] **Task 14: Implement Persona Switcher, Audit Modal & Main Page Layout**
   - **Description**: Assemble `src/app/page.tsx` integrating `TransitGraph`, `DisruptionPanel`, `ConcurrencyArena`, `PersonaSwitcher` (Dispatcher, Passenger, Auditor), and `SqlExplainModal` (showing raw recursive CTE, locks, and views).
   - **Acceptance criteria**:
     - Switching to `Passenger` shows a personalized "My Journey" ticket banner and disables dispatcher controls.
@@ -234,15 +234,15 @@
 ---
 
 ### Checkpoint 5: Complete Interactive UI
-- [ ] Dashboard is visually compelling, responsive, and intuitive.
-- [ ] Disruption injection, recursive cascade visualization, and concurrency arena work seamlessly from the browser.
-- [ ] Persona switching visibly demonstrates database security boundaries.
+- [x] Dashboard is visually compelling, responsive, and intuitive.
+- [x] Disruption injection, recursive cascade visualization, and concurrency arena work seamlessly from the browser.
+- [x] Persona switching visibly demonstrates database security boundaries.
 
 ---
 
 ## Phase 6: Automated Testing & Verification Suite
 
-- [ ] **Task 15: Automated Concurrency & Recursive CTE Test Suites**
+- [x] **Task 15: Automated Concurrency & Recursive CTE Test Suites**
   - **Description**: Write automated tests in `tests/` verifying the recursive CTE query accuracy, cycle prevention, and executing a headless 50-worker concurrent rebooking test against limited seats.
   - **Acceptance criteria**:
     - `tests/recursive_cte.test.ts` validates multi-leg delay propagation.
@@ -255,7 +255,7 @@
     - `tests/concurrency_rebook.test.ts`
   - **Estimated scope**: S (2 files)
 
-- [ ] **Task 16: Project Documentation & Presentation Guide**
+- [x] **Task 16: Project Documentation & Presentation Guide**
   - **Description**: Write a comprehensive `README.md` containing database ER diagrams (Mermaid), schema normalization breakdown, recursive CTE explanation, concurrency locking analysis, role configuration, and a step-by-step presentation script for demo day.
   - **Acceptance criteria**:
     - Clear quickstart commands (`docker compose up -d`, `npm install`, `npm run dev`).
