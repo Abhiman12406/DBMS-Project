@@ -12,7 +12,7 @@ services:
     runtime: node
     plan: free
     region: oregon # or frankfurt, ohio, singapore
-    buildCommand: npm install && npm run build && npm run db:init
+    buildCommand: npm install --include=dev && npm run build && npm run db:init
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
